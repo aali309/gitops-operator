@@ -55,10 +55,12 @@ func getPluginPodSpec() corev1.PodSpec {
 	podSpec := corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
-				Env:             util.ProxyEnvVars(),
-				Name:            gitopsPluginName,
-				Image:           consolePluginImage,
-				ImagePullPolicy: corev1.PullAlways,
+				Env:                      util.ProxyEnvVars(),
+				Name:                     gitopsPluginName,
+				Image:                    consolePluginImage,
+				ImagePullPolicy:          corev1.PullAlways,
+				TerminationMessagePath:   corev1.TerminationMessagePathDefault,
+				TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 				Ports: []corev1.ContainerPort{
 					{
 						Name:          "http",
