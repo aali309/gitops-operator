@@ -383,22 +383,18 @@ func (r *ReconcileGitopsService) reconcileDeployment(cr *pipelinesv1alpha1.Gitop
 		existingSpecTemplate := &existingPluginDeployment.Spec.Template
 		newSpecTemplate := newPluginDeployment.Spec.Template
 		// Sort list fields before comparing to handle non-deterministic ordering
-		labelsChanged := !equality.Semantic.DeepEqual(existingPluginDeployment.Labels, newPluginDeployment.Labels)
-		replicasChanged := !equality.Semantic.DeepEqual(existingPluginDeployment.Spec.Replicas, newPluginDeployment.Spec.Replicas)
-		selectorChanged := !equality.Semantic.DeepEqual(existingPluginDeployment.Spec.Selector, newPluginDeployment.Spec.Selector)
-		templateLabelsChanged := !equality.Semantic.DeepEqual(existingSpecTemplate.Labels, newSpecTemplate.Labels)
-		containersChanged := !equality.Semantic.DeepEqual(sortContainers(existingSpecTemplate.Spec.Containers), sortContainers(newSpecTemplate.Spec.Containers))
-		volumesChanged := !equality.Semantic.DeepEqual(sortVolumes(existingSpecTemplate.Spec.Volumes), sortVolumes(newSpecTemplate.Spec.Volumes))
-		restartPolicyChanged := !equality.Semantic.DeepEqual(existingSpecTemplate.Spec.RestartPolicy, newSpecTemplate.Spec.RestartPolicy)
-		dnsPolicyChanged := !equality.Semantic.DeepEqual(existingSpecTemplate.Spec.DNSPolicy, newSpecTemplate.Spec.DNSPolicy)
-		nodeSelectorChanged := !equality.Semantic.DeepEqual(existingPluginDeployment.Spec.Template.Spec.NodeSelector, newPluginDeployment.Spec.Template.Spec.NodeSelector)
-		tolerationsChanged := !equality.Semantic.DeepEqual(sortTolerations(existingPluginDeployment.Spec.Template.Spec.Tolerations), sortTolerations(newPluginDeployment.Spec.Template.Spec.Tolerations))
-		securityContextChanged := !equality.Semantic.DeepEqual(existingSpecTemplate.Spec.SecurityContext, newSpecTemplate.Spec.SecurityContext)
-		resourcesChanged := !equality.Semantic.DeepEqual(existingSpecTemplate.Spec.Containers[0].Resources, newSpecTemplate.Spec.Containers[0].Resources)
-
-		changed := labelsChanged || replicasChanged || selectorChanged || templateLabelsChanged || containersChanged ||
-			volumesChanged || restartPolicyChanged || dnsPolicyChanged || nodeSelectorChanged || tolerationsChanged ||
-			securityContextChanged || resourcesChanged
+		changed := !equality.Semantic.DeepEqual(existingPluginDeployment.Labels, newPluginDeployment.Labels) ||
+			!equality.Semantic.DeepEqual(existingPluginDeployment.Spec.Replicas, newPluginDeployment.Spec.Replicas) ||
+			!equality.Semantic.DeepEqual(existingPluginDeployment.Spec.Selector, newPluginDeployment.Spec.Selector) ||
+			!equality.Semantic.DeepEqual(existingSpecTemplate.Labels, newSpecTemplate.Labels) ||
+			!equality.Semantic.DeepEqual(sortContainers(existingSpecTemplate.Spec.Containers), sortContainers(newSpecTemplate.Spec.Containers)) ||
+			!equality.Semantic.DeepEqual(sortVolumes(existingSpecTemplate.Spec.Volumes), sortVolumes(newSpecTemplate.Spec.Volumes)) ||
+			!equality.Semantic.DeepEqual(existingSpecTemplate.Spec.RestartPolicy, newSpecTemplate.Spec.RestartPolicy) ||
+			!equality.Semantic.DeepEqual(existingSpecTemplate.Spec.DNSPolicy, newSpecTemplate.Spec.DNSPolicy) ||
+			!equality.Semantic.DeepEqual(existingPluginDeployment.Spec.Template.Spec.NodeSelector, newPluginDeployment.Spec.Template.Spec.NodeSelector) ||
+			!equality.Semantic.DeepEqual(sortTolerations(existingPluginDeployment.Spec.Template.Spec.Tolerations), sortTolerations(newPluginDeployment.Spec.Template.Spec.Tolerations)) ||
+			!equality.Semantic.DeepEqual(existingSpecTemplate.Spec.SecurityContext, newSpecTemplate.Spec.SecurityContext) ||
+			!equality.Semantic.DeepEqual(existingSpecTemplate.Spec.Containers[0].Resources, newSpecTemplate.Spec.Containers[0].Resources)
 
 		if changed {
 			reqLogger.Info("Reconciling plugin deployment", "Namespace", existingPluginDeployment.Namespace, "Name", existingPluginDeployment.Name)
