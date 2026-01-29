@@ -379,6 +379,17 @@ func (r *ReconcileGitopsService) reconcileDeployment(cr *pipelinesv1alpha1.Gitop
 	} else {
 		existingSpecTemplate := &existingPluginDeployment.Spec.Template
 		newSpecTemplate := newPluginDeployment.Spec.Template
+		// #Start Debug log
+		existingImage := ""
+		newImage := ""
+		if len(existingSpecTemplate.Spec.Containers) > 0 {
+			existingImage = existingSpecTemplate.Spec.Containers[0].Image
+		}
+		if len(newSpecTemplate.Spec.Containers) > 0 {
+			newImage = newSpecTemplate.Spec.Containers[0].Image
+		}
+		reqLogger.Info("++++reconcileDeployment compare", "existingImage", existingImage, "newImage", newImage)
+		// #End Debug log
 		// Sort list fields before comparing to handle non-deterministic ordering
 		changed := !equality.Semantic.DeepEqual(existingPluginDeployment.Labels, newPluginDeployment.Labels) ||
 			!equality.Semantic.DeepEqual(existingPluginDeployment.Spec.Replicas, newPluginDeployment.Spec.Replicas) ||
@@ -393,6 +404,9 @@ func (r *ReconcileGitopsService) reconcileDeployment(cr *pipelinesv1alpha1.Gitop
 			!equality.Semantic.DeepEqual(existingSpecTemplate.Spec.SecurityContext, newSpecTemplate.Spec.SecurityContext) ||
 			!equality.Semantic.DeepEqual(existingSpecTemplate.Spec.Containers[0].Resources, newSpecTemplate.Spec.Containers[0].Resources)
 
+		// #Debug log
+		reqLogger.Info("++++reconcileDeployment result", "changed", changed, "existingImage", existingImage, "newImage", newImage)
+		// #End Debug log
 		if changed {
 			reqLogger.Info("Reconciling plugin deployment", "Namespace", existingPluginDeployment.Namespace, "Name", existingPluginDeployment.Name)
 			existingPluginDeployment.Labels = newPluginDeployment.Labels

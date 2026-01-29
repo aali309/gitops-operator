@@ -161,6 +161,7 @@ var _ = Describe("GitOps Operator Sequential E2E Tests", func() {
 			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(pluginDeployment), pluginDeployment)).To(Succeed())
 			initialGen := pluginDeployment.Generation
 			expectedImage := pluginDeployment.Spec.Template.Spec.Containers[0].Image
+			GinkgoWriter.Printf("[1-123 debug] expectedImage=%q initialGen=%d\n", expectedImage, initialGen)
 
 			By("making an actual change to the deployment")
 			deploymentFixture.Update(pluginDeployment, func(d *appsv1.Deployment) {
@@ -191,15 +192,29 @@ var _ = Describe("GitOps Operator Sequential E2E Tests", func() {
 			})
 
 			By("verifying operator corrected the image back to the expected image")
+			pollCount := 0
+			var lastImage string
+			var lastGen int64
 			Eventually(func() bool {
+				pollCount++
 				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(pluginDeployment), pluginDeployment); err != nil {
+					GinkgoWriter.Printf("[1-123 debug] poll=%d Get err=%v\n", pollCount, err)
 					return false
 				}
 				if len(pluginDeployment.Spec.Template.Spec.Containers) == 0 {
 					return false
 				}
-				return pluginDeployment.Spec.Template.Spec.Containers[0].Image == expectedImage
-			}, "5m", "5s").Should(BeTrue(), "Operator should restore the image to %q within 5m", expectedImage)
+				curImage := pluginDeployment.Spec.Template.Spec.Containers[0].Image
+				curGen := pluginDeployment.Generation
+				lastImage = curImage
+				lastGen = curGen
+				if pollCount <= 3 || pollCount%5 == 0 {
+					GinkgoWriter.Printf("[1-123 debug] poll=%d curImage=%q curGen=%d expectedImage=%q\n", pollCount, curImage, curGen, expectedImage)
+				}
+				return curImage == expectedImage
+			}, "5m", "5s").Should(BeTrue(),
+				"Operator should restore image to %q within 5m. Last observed: image=%q gen=%d pollCount=%d (initialGen=%d genAfterChange=%d). If image stayed wrong-image:wrong-tag, operator may not have reconciled in time or read stale cache.",
+				expectedImage, lastImage, lastGen, pollCount, initialGen, genAfterChange)
 		})
 	})
 })
